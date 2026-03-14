@@ -1,5 +1,6 @@
 import { app, BrowserWindow } from "electron"
 import type { BrowserWindowConstructorOptions } from "electron"
+import path from "node:path"
 
 let win: BrowserWindow
 
@@ -43,12 +44,12 @@ function createWindow() {
         win.show()
     })
 
-    const isDev = process.env.NODE_ENV === "development"
+    const devServerUrl = process.env.VITE_DEV_SERVER_URL ?? "http://localhost:5173"
 
-    if (isDev) {
-        win.loadURL("http://localhost:5173")
+    if (!app.isPackaged) {
+        win.loadURL(devServerUrl)
     } else {
-        win.loadFile("dist/index.html")
+        win.loadFile(path.join(app.getAppPath(), "dist", "index.html"))
     }
 }
 
