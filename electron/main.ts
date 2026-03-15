@@ -1,6 +1,5 @@
 import { app, BrowserWindow, desktopCapturer, session } from "electron"
 import type { BrowserWindowConstructorOptions } from "electron"
-import path from "node:path"
 
 let win: BrowserWindow
 
@@ -88,11 +87,12 @@ function createWindow() {
     })
 
     const devServerUrl = process.env.VITE_DEV_SERVER_URL ?? "http://localhost:5173"
+    const packagedAppUrl = process.env.ELECTRON_START_URL ?? "https://meet-lite.vercel.app/"
 
     if (!app.isPackaged) {
         win.loadURL(devServerUrl)
     } else {
-        win.loadFile(path.join(app.getAppPath(), "dist", "index.html"))
+        win.loadURL(packagedAppUrl)
     }
 }
 
