@@ -1,4 +1,5 @@
 import type { ReactNode } from "react"
+import { cn } from "@/lib/utils"
 
 type AppLayoutProps = {
   children: ReactNode
@@ -11,10 +12,14 @@ export default function AppLayout({
   centerContent = true,
   containerClassName = "",
 }: AppLayoutProps) {
-  const alignmentClass = centerContent ? "items-center justify-center" : ""
-
   return (
-    <main className={`app-bg flex min-h-screen w-full overflow-hidden ${alignmentClass} p-4 sm:p-6 ${containerClassName}`}>
+    <main
+      className={cn(
+        "flex min-h-screen w-full overflow-hidden bg-background p-4 sm:p-6",
+        centerContent && "items-center justify-center",
+        containerClassName
+      )}
+    >
       {children}
     </main>
   )

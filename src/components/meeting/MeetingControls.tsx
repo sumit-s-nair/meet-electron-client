@@ -4,8 +4,10 @@ import {
   useRoomContext,
 } from "@livekit/components-react"
 import type { ReactNode } from "react"
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import {
+  Check,
+  ChevronDown,
   MessageSquare,
   Mic,
   MicOff,
@@ -36,8 +38,8 @@ function IconButton({ active, danger, onClick, title, children }: IconButtonProp
   const styleClass = danger
     ? "border-red-500/60 bg-red-600 text-white hover:bg-red-500"
     : active
-      ? "border-[#3b82f6]/70 bg-[#3b82f6]/20 text-[#e5e7eb] hover:bg-[#3b82f6]/30"
-      : "app-border app-panel app-text-primary border hover:bg-[#111827]"
+      ? "border-primary/70 bg-primary/20 text-foreground hover:bg-primary/30"
+      : "border-border bg-muted text-foreground hover:bg-card"
 
   return (
     <button type="button" title={title} className={`${baseClass} ${styleClass}`} onClick={onClick}>
@@ -46,10 +48,74 @@ function IconButton({ active, danger, onClick, title, children }: IconButtonProp
   )
 }
 
+type DevicePickerProps = {
+  devices: MediaDeviceInfo[]
+  activeDeviceId: string
+  onSelect: (deviceId: string) => Promise<void>
+  label: string
+}
+
+function DevicePicker({ devices, activeDeviceId, onSelect, label }: DevicePickerProps) {
+  const [isOpen, setIsOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!isOpen) return
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (ref.current && !ref.current.contains(event.target as Node)) {
+        setIsOpen(false)
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [isOpen])
+
+  if (devices.length === 0) return null
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        className="ml-0.5 inline-flex h-6 w-5 items-center justify-center rounded-md text-muted-foreground transition hover:text-foreground focus:outline-none"
+        onClick={() => setIsOpen((v) => !v)}
+      >
+        <ChevronDown className="h-3 w-3" />
+      </button>
+
+      {isOpen && (
+        <div className="absolute bottom-full left-1/2 z-50 mb-3 w-[260px] -translate-x-1/2 rounded-lg border border-border bg-card p-1 shadow-xl shadow-black/40">
+          <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground">{label}</div>
+          {devices.map((device) => (
+            <button
+              key={device.deviceId}
+              type="button"
+              className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition ${
+                device.deviceId === activeDeviceId
+                  ? "bg-primary/15 text-foreground"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+              }`}
+              onClick={async () => {
+                await onSelect(device.deviceId)
+                setIsOpen(false)
+              }}
+            >
+              <span className="inline-flex h-4 w-4 shrink-0 items-center justify-center">
+                {device.deviceId === activeDeviceId && <Check className="h-3 w-3 text-primary" />}
+              </span>
+              <span className="truncate">{device.label || label}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function MeetingControls({ chatOpen, onToggleChat, onLeave }: MeetingControlsProps) {
   const room = useRoomContext()
   const [shareError, setShareError] = useState<string | null>(null)
-  const [deviceError, setDeviceError] = useState<string | null>(null)
   const {
     localParticipant,
     isMicrophoneEnabled,
@@ -65,7 +131,6 @@ export default function MeetingControls({ chatOpen, onToggleChat, onLeave }: Mee
     kind: "audioinput",
     room,
     requestPermissions: true,
-    onError: (error) => setDeviceError(error.message),
   })
 
   const {
@@ -76,7 +141,6 @@ export default function MeetingControls({ chatOpen, onToggleChat, onLeave }: Mee
     kind: "videoinput",
     room,
     requestPermissions: true,
-    onError: (error) => setDeviceError(error.message),
   })
 
   const toggleMicrophone = async () => {
@@ -90,27 +154,15 @@ export default function MeetingControls({ chatOpen, onToggleChat, onLeave }: Mee
   const toggleScreenShare = async () => {
     setShareError(null)
 
+    if (isScreenShareEnabled) {
+      await localParticipant.setScreenShareEnabled(false)
+      return
+    }
+
     try {
-      await localParticipant.setScreenShareEnabled(!isScreenShareEnabled)
+      await localParticipant.setScreenShareEnabled(true)
     } catch {
-      const isMac = /Mac|iPhone|iPad|iPod/i.test(navigator.userAgent)
-      const isWindows = /Windows/i.test(navigator.userAgent)
-
-      if (isMac) {
-        setShareError(
-          "Screen share permission is blocked. Enable Screen Recording for this app in macOS System Settings, then retry.",
-        )
-        return
-      }
-
-      if (isWindows) {
-        setShareError(
-          "Unable to start screen share. Grant desktop capture permission in the system prompt, then retry.",
-        )
-        return
-      }
-
-      setShareError("Unable to start screen share. Check permission prompts and try again.")
+      setShareError("Unable to start screen share. Please try again.")
     }
   }
 
@@ -122,76 +174,50 @@ export default function MeetingControls({ chatOpen, onToggleChat, onLeave }: Mee
   return (
     <div className="pointer-events-none absolute inset-x-0 bottom-6 z-30 flex justify-center px-4">
       <div className="pointer-events-auto flex flex-col items-center gap-3">
-        <div className="grid w-full max-w-[680px] grid-cols-1 gap-2 sm:grid-cols-2">
-          <label className="app-card app-border flex items-center gap-2 rounded-lg border px-3 py-2 text-xs">
-            <span className="app-text-secondary shrink-0">Mic</span>
-            <select
-              value={activeMicrophoneId}
-              onChange={async (event) => {
-                setDeviceError(null)
-                await setActiveMicrophone(event.target.value)
-              }}
-              className="app-panel app-border app-text-primary w-full rounded-md border px-2 py-1 outline-none"
-            >
-              {microphones.map((device) => (
-                <option key={device.deviceId} value={device.deviceId}>
-                  {device.label || "Microphone"}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label className="app-card app-border flex items-center gap-2 rounded-lg border px-3 py-2 text-xs">
-            <span className="app-text-secondary shrink-0">Camera</span>
-            <select
-              value={activeCameraId}
-              onChange={async (event) => {
-                setDeviceError(null)
-                await setActiveCamera(event.target.value)
-              }}
-              className="app-panel app-border app-text-primary w-full rounded-md border px-2 py-1 outline-none"
-            >
-              {cameras.map((device) => (
-                <option key={device.deviceId} value={device.deviceId}>
-                  {device.label || "Camera"}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-
-        {deviceError ? (
-          <div className="app-card app-border app-text-secondary max-w-[560px] rounded-lg border px-3 py-2 text-xs">
-            {deviceError}
-          </div>
-        ) : null}
-
         {shareError ? (
-          <div className="app-card app-border app-text-secondary max-w-[560px] rounded-lg border px-3 py-2 text-xs">
+          <div className="max-w-[560px] rounded-lg border border-border bg-card px-3 py-2 text-xs text-muted-foreground">
             {shareError}
           </div>
         ) : null}
 
-        <div className="app-card app-border flex items-center gap-3 rounded-full border px-6 py-3 shadow-lg shadow-black/30">
-        <IconButton active={isMicrophoneEnabled} title="Microphone" onClick={toggleMicrophone}>
-          {isMicrophoneEnabled ? <Mic className="h-4 w-4" /> : <MicOff className="h-4 w-4" />}
-        </IconButton>
+        <div className="flex items-center gap-3 rounded-full border border-border bg-card px-6 py-3 shadow-lg shadow-black/30">
+          {/* Mic toggle + device picker */}
+          <div className="flex items-center">
+            <IconButton active={isMicrophoneEnabled} title="Microphone" onClick={toggleMicrophone}>
+              {isMicrophoneEnabled ? <Mic className="h-4 w-4" /> : <MicOff className="h-4 w-4" />}
+            </IconButton>
+            <DevicePicker
+              devices={microphones}
+              activeDeviceId={activeMicrophoneId}
+              onSelect={setActiveMicrophone}
+              label="Microphone"
+            />
+          </div>
 
-        <IconButton active={isCameraEnabled} title="Camera" onClick={toggleCamera}>
-          {isCameraEnabled ? <Video className="h-4 w-4" /> : <VideoOff className="h-4 w-4" />}
-        </IconButton>
+          {/* Camera toggle + device picker */}
+          <div className="flex items-center">
+            <IconButton active={isCameraEnabled} title="Camera" onClick={toggleCamera}>
+              {isCameraEnabled ? <Video className="h-4 w-4" /> : <VideoOff className="h-4 w-4" />}
+            </IconButton>
+            <DevicePicker
+              devices={cameras}
+              activeDeviceId={activeCameraId}
+              onSelect={setActiveCamera}
+              label="Camera"
+            />
+          </div>
 
-        <IconButton active={isScreenShareEnabled} title="Share Screen" onClick={toggleScreenShare}>
-          <Monitor className="h-4 w-4" />
-        </IconButton>
+          <IconButton active={isScreenShareEnabled} title="Share Screen" onClick={toggleScreenShare}>
+            <Monitor className="h-4 w-4" />
+          </IconButton>
 
-        <IconButton active={chatOpen} title="Toggle Chat" onClick={onToggleChat}>
-          <MessageSquare className="h-4 w-4" />
-        </IconButton>
+          <IconButton active={chatOpen} title="Toggle Chat" onClick={onToggleChat}>
+            <MessageSquare className="h-4 w-4" />
+          </IconButton>
 
-        <IconButton danger title="Leave Meeting" onClick={leaveMeeting}>
-          <PhoneOff className="h-4 w-4" />
-        </IconButton>
+          <IconButton danger title="Leave Meeting" onClick={leaveMeeting}>
+            <PhoneOff className="h-4 w-4" />
+          </IconButton>
         </div>
       </div>
     </div>

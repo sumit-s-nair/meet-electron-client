@@ -6,6 +6,8 @@ let win: BrowserWindow
 
 app.whenReady().then(() => {
     const defaultSession = session.defaultSession
+    const isMac = process.platform === "darwin"
+    const macMajorVersion = Number.parseInt(process.getSystemVersion().split(".")[0] ?? "0", 10)
 
     defaultSession.setPermissionCheckHandler((_webContents, permission) => {
         if (permission === "media") {
@@ -16,24 +18,30 @@ app.whenReady().then(() => {
     })
 
     defaultSession.setPermissionRequestHandler((_webContents, permission, callback) => {
-        if (permission === "media") {
+        if (permission === "media" || permission === "display-capture") {
             callback(true)
             return
         }
 
         callback(false)
     })
-
+    
     defaultSession.setDisplayMediaRequestHandler(
-        async (_request, callback) => {
-            const sources = await desktopCapturer.getSources({
-                types: ["screen", "window"],
-                thumbnailSize: { width: 0, height: 0 },
-            })
+        async (request, callback) => {
+            const sources = await desktopCapturer.getSources({ types: ["screen", "window"] })
+            const fallbackSource = sources[0]
 
-            callback({ video: sources[0] })
+            if (!fallbackSource) {
+                callback({})
+                return
+            }
+
+            callback({
+                video: fallbackSource,
+                audio: request.audioRequested && process.platform === "win32" ? "loopback" : undefined,
+            })
         },
-        { useSystemPicker: true },
+        isMac && macMajorVersion >= 15 ? { useSystemPicker: true } : undefined,
     )
 
     createWindow()

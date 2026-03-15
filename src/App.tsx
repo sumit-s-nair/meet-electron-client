@@ -18,7 +18,7 @@ function App() {
         <Route
           path="/meetings/:roomId"
           element={
-            <AppLayout centerContent={false} containerClassName="overflow-hidden p-0">
+            <AppLayout centerContent={false} containerClassName="h-[100dvh] overflow-hidden p-0">
               <Meeting />
             </AppLayout>
           }

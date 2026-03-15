@@ -1,9 +1,13 @@
 import { useState } from "react"
 import type { FormEvent } from "react"
 import { LogIn, Video } from "lucide-react"
-import Button from "./Button"
-import Card from "./Card"
-import Input from "./Input"
+import {
+  Card,
+  CardHeader,
+  CardContent,
+} from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
 
 type MeetingActionsCardProps = {
   username: string
@@ -34,50 +38,59 @@ export default function MeetingActionsCard({
   }
 
   return (
-    <Card className="space-y-5">
-      <div className="app-panel app-border app-text-secondary rounded-xl border px-4 py-3 text-sm">
-        Signed in as <span className="app-text-primary font-medium">{username}</span>
-      </div>
+    <Card className="w-full max-w-[460px] border-border bg-card shadow-xl">
+      <CardHeader>
+        <div className="rounded-xl border border-border bg-muted px-4 py-3 text-sm text-muted-foreground">
+          Signed in as <span className="font-medium text-foreground">{username}</span>
+        </div>
+      </CardHeader>
 
-      <div className="space-y-3">
-        <div className="app-text-primary flex items-center gap-2 text-sm font-medium">
-          <Video size={16} className="app-text-secondary" />
-          Create Meeting
+      <CardContent className="space-y-5">
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+            <Video size={16} className="text-muted-foreground" />
+            Create Meeting
+          </div>
+
+          <Button
+            type="button"
+            onClick={onCreateMeeting}
+            disabled={isCreatingMeeting}
+            className="h-12 w-full text-base font-semibold"
+            size="lg"
+          >
+            {isCreatingMeeting ? "Creating..." : "Create Meeting"}
+          </Button>
+
+          {createError ? <p className="text-sm text-rose-400">{createError}</p> : null}
         </div>
 
-        <Button
-          type="button"
-          onClick={onCreateMeeting}
-          disabled={isCreatingMeeting}
-        >
-          {isCreatingMeeting ? "Creating..." : "Create Meeting"}
-        </Button>
+        <form className="space-y-3" onSubmit={handleJoinSubmit}>
+          <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+            <LogIn size={16} className="text-muted-foreground" />
+            Join Meeting
+          </div>
 
-        {createError ? <p className="text-sm text-rose-400">{createError}</p> : null}
-      </div>
+          <Input
+            type="text"
+            value={meetingCode}
+            onChange={(event) => setMeetingCode(event.target.value)}
+            placeholder="Meeting code"
+            required
+            className="h-12 rounded-xl bg-muted px-4 text-foreground placeholder:text-muted-foreground"
+          />
 
-      <form className="space-y-3" onSubmit={handleJoinSubmit}>
-        <div className="app-text-primary flex items-center gap-2 text-sm font-medium">
-          <LogIn size={16} className="app-text-secondary" />
-          Join Meeting
-        </div>
-
-        <Input
-          type="text"
-          value={meetingCode}
-          onChange={(event) => setMeetingCode(event.target.value)}
-          placeholder="Meeting code"
-          required
-        />
-
-        <Button
-          variant="secondary"
-          type="submit"
-          disabled={!meetingCode.trim()}
-        >
-          Join Meeting
-        </Button>
-      </form>
+          <Button
+            variant="outline"
+            type="submit"
+            disabled={!meetingCode.trim()}
+            className="h-12 w-full text-base font-semibold"
+            size="lg"
+          >
+            Join Meeting
+          </Button>
+        </form>
+      </CardContent>
     </Card>
   )
 }

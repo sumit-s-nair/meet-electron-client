@@ -4,8 +4,13 @@ import { useNavigate, useParams } from "react-router-dom"
 import {
     LiveKitRoom,
 } from "@livekit/components-react"
-import Button from "../components/Button"
-import Card from "../components/Card"
+import {
+    Card,
+    CardHeader,
+    CardTitle,
+    CardContent,
+} from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
 import MeetingLayout from "../components/meeting/MeetingLayout"
 
 export default function Meeting() {
@@ -92,23 +97,29 @@ export default function Meeting() {
     if (!hasRoomId) {
         return (
             <div className="flex h-[100dvh] w-full items-center justify-center overflow-hidden px-4 sm:px-6">
-                <Card className="w-full max-w-[460px] space-y-4 p-6 sm:p-8">
-                    <div className="flex items-center gap-3">
-                        <AlertTriangle className="h-5 w-5 text-amber-400" />
-                        <h1 className="app-text-primary text-lg font-semibold">Meeting room is missing</h1>
-                    </div>
-
-                    <p className="app-text-secondary text-sm">The meeting URL is incomplete. Go back to Home and try again.</p>
-
-                    <Button
-                        type="button"
-                        variant="secondary"
-                        className="inline-flex items-center justify-center gap-2"
-                        onClick={() => navigate("/")}
-                    >
-                        <ArrowLeft className="h-4 w-4" />
-                        Back to Home
-                    </Button>
+                <Card className="w-full max-w-[460px] border-border bg-card shadow-xl">
+                    <CardHeader>
+                        <div className="flex items-center gap-3">
+                            <AlertTriangle className="h-5 w-5 text-amber-400" />
+                            <CardTitle className="text-lg font-semibold text-foreground">
+                                Meeting room is missing
+                            </CardTitle>
+                        </div>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <p className="text-sm text-muted-foreground">
+                            The meeting URL is incomplete. Go back to Home and try again.
+                        </p>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            className="inline-flex items-center justify-center gap-2"
+                            onClick={() => navigate("/")}
+                        >
+                            <ArrowLeft className="h-4 w-4" />
+                            Back to Home
+                        </Button>
+                    </CardContent>
                 </Card>
             </div>
         )
@@ -117,33 +128,38 @@ export default function Meeting() {
     if (error) {
         return (
             <div className="flex h-[100dvh] w-full items-center justify-center overflow-hidden px-4 sm:px-6">
-                <Card className="w-full max-w-[460px] space-y-5 p-6 sm:p-8">
-                    <div className="flex items-center gap-3">
-                        <AlertTriangle className="h-5 w-5 text-amber-400" />
-                        <h1 className="app-text-primary text-lg font-semibold">Unable to join meeting</h1>
-                    </div>
+                <Card className="w-full max-w-[460px] border-border bg-card shadow-xl">
+                    <CardHeader>
+                        <div className="flex items-center gap-3">
+                            <AlertTriangle className="h-5 w-5 text-amber-400" />
+                            <CardTitle className="text-lg font-semibold text-foreground">
+                                Unable to join meeting
+                            </CardTitle>
+                        </div>
+                    </CardHeader>
+                    <CardContent className="space-y-5">
+                        <p className="text-sm text-muted-foreground">{error}</p>
 
-                    <p className="app-text-secondary text-sm">{error}</p>
-
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                        <Button
-                            type="button"
-                            className="inline-flex items-center justify-center gap-2"
-                            onClick={() => setReloadKey((current) => current + 1)}
-                        >
-                            <RotateCw className="h-4 w-4" />
-                            Retry
-                        </Button>
-                        <Button
-                            type="button"
-                            variant="secondary"
-                            className="inline-flex items-center justify-center gap-2"
-                            onClick={() => navigate("/")}
-                        >
-                            <ArrowLeft className="h-4 w-4" />
-                            Back to Home
-                        </Button>
-                    </div>
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                            <Button
+                                type="button"
+                                className="inline-flex items-center justify-center gap-2"
+                                onClick={() => setReloadKey((current) => current + 1)}
+                            >
+                                <RotateCw className="h-4 w-4" />
+                                Retry
+                            </Button>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                className="inline-flex items-center justify-center gap-2"
+                                onClick={() => navigate("/")}
+                            >
+                                <ArrowLeft className="h-4 w-4" />
+                                Back to Home
+                            </Button>
+                        </div>
+                    </CardContent>
                 </Card>
             </div>
         )
@@ -151,7 +167,7 @@ export default function Meeting() {
 
     if (isLoading || !token) {
         return (
-            <div className="app-text-secondary flex h-[100dvh] w-full items-center justify-center overflow-hidden">
+            <div className="flex h-[100dvh] w-full items-center justify-center overflow-hidden text-muted-foreground">
                 Connecting to meeting...
             </div>
         )

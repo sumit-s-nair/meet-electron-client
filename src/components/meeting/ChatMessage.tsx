@@ -7,10 +7,13 @@ type ChatMessageProps = {
 }
 
 export default function ChatMessage({ message, isOwnMessage, ownDisplayName }: ChatMessageProps) {
+  const identity = message.from?.identity
+  const safeIdentity = identity && /^[a-f0-9-]{16,}$/i.test(identity) ? "Guest" : identity
+
   const sender =
     (isOwnMessage ? ownDisplayName : undefined) ||
     message.from?.name ||
-    message.from?.identity ||
+    safeIdentity ||
     "Unknown"
   const timestamp = new Date(message.timestamp).toLocaleTimeString([], {
     hour: "2-digit",
@@ -20,11 +23,11 @@ export default function ChatMessage({ message, isOwnMessage, ownDisplayName }: C
   return (
     <article className={`flex ${isOwnMessage ? "justify-end" : "justify-start"}`}>
       <div className="max-w-[85%]">
-        <p className="app-text-secondary mb-1 px-1 text-xs">{sender}</p>
-        <div className="app-border rounded-xl border bg-[#111827] px-3 py-2">
-          <p className="app-text-primary whitespace-pre-wrap break-words text-sm">{message.message}</p>
+        <p className="mb-1 px-1 text-xs text-muted-foreground">{sender}</p>
+        <div className="rounded-xl border border-border bg-card px-3 py-2">
+          <p className="whitespace-pre-wrap break-words text-sm text-foreground">{message.message}</p>
         </div>
-        <p className="app-text-secondary mt-1 px-1 text-[10px]">{timestamp}</p>
+        <p className="mt-1 px-1 text-[10px] text-muted-foreground">{timestamp}</p>
       </div>
     </article>
   )

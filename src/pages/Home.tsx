@@ -126,13 +126,13 @@ export default function Home() {
   }
 
   return (
-    <section className="w-full max-w-[460px]">
-      <h1 className="app-text-primary mb-6 text-center text-3xl font-semibold tracking-tight">
+    <section className="flex w-full flex-col items-center">
+      <h1 className="mb-6 text-center text-3xl font-semibold tracking-tight text-foreground">
         MeetLite
       </h1>
 
       {isCheckingUser ? (
-        <div className="app-card app-border app-text-secondary rounded-2xl border p-7 text-center text-sm shadow-xl">
+        <div className="w-full max-w-[460px] rounded-xl border border-border bg-card p-7 text-center text-sm text-muted-foreground shadow-xl">
           Loading...
         </div>
       ) : !user ? (
