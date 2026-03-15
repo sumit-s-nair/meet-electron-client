@@ -3,11 +3,10 @@ import { AlertTriangle, ArrowLeft, RotateCw } from "lucide-react"
 import { useNavigate, useParams } from "react-router-dom"
 import {
     LiveKitRoom,
-    VideoConference,
 } from "@livekit/components-react"
-import "@livekit/components-styles"
 import Button from "../components/Button"
 import Card from "../components/Card"
+import MeetingLayout from "../components/meeting/MeetingLayout"
 
 export default function Meeting() {
     const [token, setToken] = useState<string | null>(null)
@@ -31,14 +30,14 @@ export default function Meeting() {
             setIsLoading(true)
             setToken(null)
 
-            const userId =
-                localStorage.getItem("userId") ??
+            const userIdentity =
                 localStorage.getItem("username") ??
+                localStorage.getItem("userId") ??
                 crypto.randomUUID()
 
             try {
                 const res = await fetch(
-                    `${import.meta.env.VITE_API_URL}/meetings/${encodeURIComponent(roomId)}/token?userId=${encodeURIComponent(userId)}`,
+                    `${import.meta.env.VITE_API_URL}/meetings/${encodeURIComponent(roomId)}/token?userId=${encodeURIComponent(userIdentity)}`,
                 )
 
                 if (!res.ok) {
@@ -159,16 +158,21 @@ export default function Meeting() {
     }
 
     return (
-        <LiveKitRoom
-            connect={true}
-            video={true}
-            audio={true}
-            token={token}
-            serverUrl={import.meta.env.VITE_LIVEKIT_URL}
-            onDisconnected={() => navigate("/", { replace: true })}
-            style={{ height: "100vh", width: "100%" }}
-        >
-            <VideoConference />
-        </LiveKitRoom>
+        <div className="h-[100dvh] w-full overflow-hidden">
+            <LiveKitRoom
+                connect={true}
+                video={true}
+                audio={true}
+                token={token}
+                serverUrl={import.meta.env.VITE_LIVEKIT_URL}
+                onDisconnected={() => navigate("/", { replace: true })}
+                style={{ height: "100%", width: "100%" }}
+            >
+                <MeetingLayout
+                    roomId={roomId!}
+                    onLeave={() => navigate("/", { replace: true })}
+                />
+            </LiveKitRoom>
+        </div>
     )
 }

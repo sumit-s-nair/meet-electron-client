@@ -14,7 +14,7 @@ export default function AppLayout({
   const alignmentClass = centerContent ? "items-center justify-center" : ""
 
   return (
-    <main className={`app-bg flex min-h-screen w-full ${alignmentClass} p-4 sm:p-6 ${containerClassName}`}>
+    <main className={`app-bg flex min-h-screen w-full overflow-hidden ${alignmentClass} p-4 sm:p-6 ${containerClassName}`}>
       {children}
     </main>
   )

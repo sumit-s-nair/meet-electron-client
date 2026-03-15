@@ -1,8 +1,43 @@
-import { app, BrowserWindow } from "electron"
+import { app, BrowserWindow, desktopCapturer, session } from "electron"
 import type { BrowserWindowConstructorOptions } from "electron"
 import path from "node:path"
 
 let win: BrowserWindow
+
+app.whenReady().then(() => {
+    const defaultSession = session.defaultSession
+
+    defaultSession.setPermissionCheckHandler((_webContents, permission) => {
+        if (permission === "media") {
+            return true
+        }
+
+        return false
+    })
+
+    defaultSession.setPermissionRequestHandler((_webContents, permission, callback) => {
+        if (permission === "media") {
+            callback(true)
+            return
+        }
+
+        callback(false)
+    })
+
+    defaultSession.setDisplayMediaRequestHandler(
+        async (_request, callback) => {
+            const sources = await desktopCapturer.getSources({
+                types: ["screen", "window"],
+                thumbnailSize: { width: 0, height: 0 },
+            })
+
+            callback({ video: sources[0] })
+        },
+        { useSystemPicker: true },
+    )
+
+    createWindow()
+})
 
 function createWindow() {
     const isMac = process.platform === "darwin"
@@ -52,8 +87,6 @@ function createWindow() {
         win.loadFile(path.join(app.getAppPath(), "dist", "index.html"))
     }
 }
-
-app.whenReady().then(createWindow)
 
 app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {
