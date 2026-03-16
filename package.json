@@ -9,7 +9,7 @@
     "dev:electron": "tsc -p tsconfig.electron.json --watch",
     "start": "concurrently \"pnpm dev\" \"pnpm dev:electron\" \"wait-on http://localhost:5173 && electron dist-electron/main.js\"",
     "build": "tsc -b && vite build",
-    "build:electron": "tsc -p tsconfig.electron.json && copy electron\\package.json dist-electron\\package.json",
+    "build:electron": "tsc -p tsconfig.electron.json",
     "electron:build": "pnpm run build && pnpm run build:electron && electron-builder",
     "lint": "eslint .",
     "preview": "vite preview"
